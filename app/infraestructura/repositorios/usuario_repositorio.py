@@ -1,55 +1,43 @@
-from app.dominio.entidades.usuario_entidad import UsuarioEntidad
+from sqlalchemy.orm import Session
+
+from app.dominio.modelos.usuario import Usuario
+from app.infraestructura.basedatos.entidades.usuario_entidad import Usuario as UsuarioEntidad
+
 
 class UsuarioRepositorio:
-    # def __init__(self, db: Session):
-    #     self.db = db
+    def __init__(self, db: Session):
+         self.db = db
 
-    def obtener_usuario(self, username: str): #-> UsuarioEntidad:
-        return username
-        #return self.db.query(UsuarioEntidad).filter(UsuarioEntidad.id == username).first()
 
-    fake_users_db = {
-        "johndoe": {
-            "username": "exito",
-            "rol": "cliente",
-            "hashed_password": "$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW" # clave: secret
-        },
-        "alice": {
-            "username": "jumbo",
-            "rol": "cliente",
-            "hashed_password": "$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW" # clave: secret
-        },
-        "admin": {
-            "username": "admin",
-            "rol": "admin",
-            "hashed_password": "$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW" # clave: secret
-        } 
-    }
-    @classmethod
-    def fake_obtener_usuario(cls, username: str): # TODO borrar
-        if username in cls.fake_users_db: # Si el usuario existe en db
-            user_dict = cls.fake_users_db[username]
-            return user_dict
+    def crear_usuario(self, usuario: Usuario) -> UsuarioEntidad:
+        usuario_creacion = UsuarioEntidad(**usuario.model_dump())
+        self.db.add(usuario_creacion)
+        self.db.commit()
+        self.db.refresh(usuario_creacion)
+        return usuario_creacion
 
-#     def create_user(self, user: UserCreate) -> User:
-#         db_user = User(**user.dict())
-#         self.db.add(db_user)
-#         self.db.commit()
-#         self.db.refresh(db_user)
-#         return db_user
 
-#     def update_user(self, user_id: int, user: UserUpdate) -> User:
-#         db_user = self.get_user(user_id)
-#         if db_user:
-#             for key, value in user.dict(exclude_unset=True).items():
-#                 setattr(db_user, key, value)
-#             self.db.commit()
-#             self.db.refresh(db_user)
-#         return db_user
+    def obtener_usuario(self, usuario_id: str)-> UsuarioEntidad:
+        return self.db.query(UsuarioEntidad).filter(UsuarioEntidad.id == usuario_id).first()
 
-#     def delete_user(self, user_id: int) -> User:
-#         db_user = self.get_user(user_id)
-#         if db_user:
-#             self.db.delete(db_user)
-#             self.db.commit()
-#         return db_user
+
+    def obtener_usuario_por_username(self, username: str)-> UsuarioEntidad:
+        return self.db.query(UsuarioEntidad).filter(UsuarioEntidad.username == username).first()
+
+
+    def actualizar_usuario(self, usuario_id: int, usuario: Usuario) -> UsuarioEntidad:
+        usuario_db = self.obtener_usuario(usuario_id)
+        if usuario_db:
+            for key, value in usuario.dict(exclude_unset=True).items():
+                setattr(usuario_db, key, value)
+            self.db.commit()
+            self.db.refresh(usuario_db)
+        return usuario_db
+
+
+    # def eliminar_usuario(self, usuario_id: int) -> UsuarioEntidad:
+    #     usuario_db = self.obtener_usuario(usuario_id)
+    #     if usuario_db:
+    #         self.db.delete(usuario_db)
+    #         self.db.commit()
+    #     return usuario_db

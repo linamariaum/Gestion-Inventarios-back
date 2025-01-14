@@ -1,35 +1,23 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Body
 from fastapi.security import OAuth2PasswordRequestForm
-from passlib.context import CryptContext
+from fastapi.responses import JSONResponse
+from fastapi.encoders import jsonable_encoder
+from sqlalchemy.exc import IntegrityError
 from pydantic import BaseModel
 from typing import Annotated
+from sqlalchemy.orm import Session
 
 from app.core.security import createToken, oauth2_scheme
+from app.core.security import autenticar_usuario, crearUsuario
 from app.dominio.modelos.usuario import Usuario
-from app.infraestructura.repositorios.usuario_repositorio import UsuarioRepositorio
+from app.infraestructura.basedatos.db import get_db
 
 
 routerLogin = APIRouter()
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
 
 class Token(BaseModel):
     access_token: str
     token_type: str
-
-
-def verificar_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
-
-
-def autenticar_usuario(username: str, password: str) -> Usuario | bool: # TODO reubicar clase
-    #user = UsuarioRepositorio.obtener_usuario(username) # Buscar si mi usuario existe en DB
-    usuario = UsuarioRepositorio.fake_obtener_usuario(username)
-    if not usuario:
-        return False
-    if not verificar_password(password, usuario['hashed_password']):
-        return False
-    return Usuario(**usuario)
 
 
 @routerLogin.post('/',
@@ -37,22 +25,21 @@ def autenticar_usuario(username: str, password: str) -> Usuario | bool: # TODO r
         summary="Login",
         description="Iniciar sesión",
         response_description="Obtiene token de autenticación")
-def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]) -> Token:
+def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: Session = Depends(get_db)) -> Token:
     """
-    Genera un Token de acceso para la cuenta cliente
+    Autentica el usuario en el sistema y genera un Token de acceso para la cuenta
 
     - **username**: requerido nombre de usuario
     - **password**: requerido contraseña de la cuenta
     """
-    usuario = autenticar_usuario(form_data.username, form_data.password)
-    if not usuario:
+    usuario_logueado = autenticar_usuario(form_data.username, form_data.password, db)
+    if not usuario_logueado:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail={'mensaje': 'Usuario o contraseña incorrectos'},
             headers={'WWW-Authenticate': 'Bearer'}
         )
-    usuario_logueado = Usuario(**usuario.model_dump())
-    token = createToken(payload={'username': usuario_logueado.username, 'rol': usuario_logueado.rol})
+    token = createToken(payload={'id': usuario_logueado.id, 'rol': usuario_logueado.rol})
     return Token(access_token=token, token_type="bearer")
 
 
@@ -63,3 +50,15 @@ def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]) -> Token:
         response_description="Obtiene token de autenticación")
 async def obtener_token_activo(token: Annotated[str, Depends(oauth2_scheme)]):
     return Token(access_token=token, token_type="bearer")
+
+
+@routerLogin.post('/crearUsuario',
+    include_in_schema=False,
+    response_model=Usuario
+)
+def crear_usuario(username: str = Body(), password: str = Body(), rol: str = Body(), db: Session = Depends(get_db)):
+    try:
+        usuario_nuevo = crearUsuario(username, password, rol, db)
+        return JSONResponse(status_code=status.HTTP_201_CREATED, content=jsonable_encoder(usuario_nuevo))
+    except IntegrityError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El usuario ya existe") from e

@@ -1,11 +1,11 @@
 from pydantic import BaseModel
 from typing import Optional
 
-class Cliente(BaseModel):
+class Producto(BaseModel):
     id: Optional[int] = None
     nombre: str
-    email: str
-    telefono: Optional[str] = None
+    precio: int
+    cantidad: int
 
     class Config:
         orm_mode = True

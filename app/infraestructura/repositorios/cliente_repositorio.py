@@ -1,33 +1,46 @@
+from sqlalchemy.orm import Session
 
-# class ClienteRepositorio:
-#     def __init__(self, db: Session):
-#         self.db = db
+from app.core.security import hash_password
+from app.dominio.modelos.usuario import Usuario
+from app.dominio.modelos.cliente import Cliente
+from app.aplicacion.comando_cliente_creacion import ClienteCreacion
+from app.infraestructura.repositorios.usuario_repositorio import UsuarioRepositorio
+from app.infraestructura.basedatos.entidades.cliente_entidad import Cliente as ClienteEntidad
 
-#     def obtener_cliente(self, user_id: int) -> Cliente:
-#         return self.db.query(Cliente).filter(User.id == user_id).first()
 
-#     def obtener_clientes(self, skip: int = 0, limit: int = 10) -> list[Cliente]:
-#         return self.db.query(Cliente).offset(skip).limit(limit).all()
+class ClienteRepositorio:
+    def __init__(self, db: Session):
+        self.db = db
 
-#     def crear_cliente(self, user: UserCreate) -> Cliente:
-#         db_user = User(**user.dict())
-#         self.db.add(db_user)
-#         self.db.commit()
-#         self.db.refresh(db_user)
-#         return db_user
 
-#     def actualizar_cliente(self, user_id: int, user: UserUpdate) -> Cliente:
-#         db_user = self.obtener_cliente(user_id)
-#         if db_user:
-#             for key, value in user.dict(exclude_unset=True).items():
-#                 setattr(db_user, key, value)
-#             self.db.commit()
-#             self.db.refresh(db_user)
-#         return db_user
+    def obtener_clientes(self) -> list[ClienteEntidad]:
+        return self.db.query(ClienteEntidad).all()
 
-#     def eliminar_cliente(self, user_id: int) -> Cliente:
-#         db_user = self.obtener_cliente(user_id)
-#         if db_user:
-#             self.db.delete(db_user)
-#             self.db.commit()
-#         return db_user
+
+    def obtener_cliente(self, usuario_id: int) -> ClienteEntidad:
+        return self.db.query(ClienteEntidad).filter(ClienteEntidad.idUsuario == usuario_id).first()
+
+
+    def crear_cliente(self, cliente_creacion: ClienteCreacion) -> ClienteEntidad:
+        hash_password_create = hash_password(cliente_creacion.password)
+        usuario_creacion = Usuario(username=cliente_creacion.username, hashed_password=hash_password_create, rol=cliente_creacion.rol)
+        usuario_db = UsuarioRepositorio(self.db).crear_usuario(usuario_creacion)
+        cliente = ClienteEntidad(id=cliente_creacion.id, nombre=cliente_creacion.nombre, email= cliente_creacion.email, telefono=cliente_creacion.telefono, idUsuario=usuario_db.id)
+        self.db.add(cliente)
+        self.db.commit()
+        self.db.refresh(cliente)
+        return cliente
+
+
+    def actualizar_cliente(self, usuario_id: int, cliente: Cliente) -> ClienteEntidad:
+        cliente_db = self.obtener_cliente(usuario_id)
+        if cliente_db:
+            for key, value in cliente.dict(exclude_unset=True).items():
+                setattr(cliente_db, key, value)
+            self.db.commit()
+            self.db.refresh(cliente_db)
+        return cliente_db
+
+
+    def existe_cliente(self, cliente_id: int) -> bool:
+        return self.db.query(ClienteEntidad).filter(ClienteEntidad.id == cliente_id).first() is not None
