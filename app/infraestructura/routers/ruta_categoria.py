@@ -37,4 +37,4 @@ def crear_categoria(categoria_creacion: Categoria, permiso: Annotated[bool, Depe
             categoria_nueva = CategoriaRepositorio(db=db).crear_categoria(categoria_creacion)
             return JSONResponse(status_code=status.HTTP_201_CREATED, content=jsonable_encoder(Categoria.model_validate(categoria_nueva)))
         except IntegrityError as e:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="La categoria ya existe") from e
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='La categoria ya existe') from e

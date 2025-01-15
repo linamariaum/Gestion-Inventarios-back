@@ -32,7 +32,7 @@ def crear_cliente(cliente_creacion: ClienteCreacion, permiso: Annotated[bool, De
             cliente_nuevo = ClienteRepositorio(db=db).crear_cliente(cliente_creacion)
             return JSONResponse(status_code=status.HTTP_201_CREATED, content=jsonable_encoder(Cliente.model_validate(cliente_nuevo)))
         except IntegrityError as e:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El cliente ya existe") from e
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='El cliente ya existe') from e
 
 
 @routerClientes.get('/all',

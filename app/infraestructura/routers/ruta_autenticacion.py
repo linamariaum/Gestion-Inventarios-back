@@ -36,7 +36,7 @@ def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: Sessio
     if not usuario_logueado:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail={'mensaje': 'Usuario o contraseña incorrectos'},
+            detail='Usuario o contraseña incorrectos',
             headers={'WWW-Authenticate': 'Bearer'}
         )
     token = createToken(payload={'id': usuario_logueado.id, 'rol': usuario_logueado.rol})
@@ -61,4 +61,4 @@ def crear_usuario(username: str = Body(), password: str = Body(), rol: str = Bod
         usuario_nuevo = crearUsuario(username, password, rol, db)
         return JSONResponse(status_code=status.HTTP_201_CREATED, content=jsonable_encoder(usuario_nuevo))
     except IntegrityError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El usuario ya existe") from e
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='El usuario ya existe') from e

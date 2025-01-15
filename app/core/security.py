@@ -52,7 +52,7 @@ def validarRol(token: dict, rol: str) -> bool:
 def validarRolAdmin(token: dict = Depends(validateToken)) -> bool:
     es_admin = validarRol(token, 'admin')
     if not es_admin:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='No tiene permisos de administrador')
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='No tiene permisos de administrador')
     return es_admin
 
 

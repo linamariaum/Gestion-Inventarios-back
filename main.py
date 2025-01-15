@@ -15,9 +15,9 @@ app = FastAPI(
 
 Base.metadata.create_all(bind=engine)
 
-@app.get('/api', tags=['Inicio'])
+@app.get('/api/health', tags=['Inicio'])
 def bienvenida():
-    return {'mensaje': 'Bienvenidos a Gestion Inventarios ms'}
+    return {'detail': 'Bienvenidos a Gestion Inventarios ms'}
 
 app.include_router(routerLogin, tags=['Autenticacion'], prefix='/api/v1/login')
 app.include_router(routerClientes, tags=['Clientes'], prefix='/api/v1/clientes')

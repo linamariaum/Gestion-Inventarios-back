@@ -42,12 +42,12 @@ class ProductoRepositorio:
     def producto_pertenece_cliente(self, usuario_id: int, producto_id: int) -> ProductoEntidad:
         cliente = ClienteRepositorio(self.db).obtener_cliente(usuario_id)
         if not cliente:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Cliente no encontrado")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Cliente no encontrado')
         producto_db = self.obtener_producto_por_id(producto_id)
         if not producto_db:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Producto no encontrado")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Producto no encontrado')
         if producto_db.idCliente != cliente.id:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Producto no pertenece al cliente")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Producto no pertenece al cliente')
         return producto_db
 
 
@@ -57,10 +57,10 @@ class ProductoRepositorio:
 
     def crear_producto(self, producto_creacion: ProductoCreacion) -> ProductoEntidad:
         if not ClienteRepositorio(self.db).existe_cliente(producto_creacion.idCliente):
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Cliente no encontrado")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Cliente no encontrado')
 
         if not CategoriaRepositorio(self.db).existe_categoria(producto_creacion.idCategoria):
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Categoría no encontrada")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Categoría no encontrada')
 
         producto = ProductoEntidad(**producto_creacion.model_dump())
         self.db.add(producto)
