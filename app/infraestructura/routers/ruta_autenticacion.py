@@ -4,7 +4,7 @@ from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.exc import IntegrityError
 from pydantic import BaseModel
-from typing import Annotated
+from typing import Annotated, Optional
 from sqlalchemy.orm import Session
 
 from app.core.security import createToken, oauth2_scheme
@@ -18,6 +18,7 @@ routerLogin = APIRouter()
 class Token(BaseModel):
     access_token: str
     token_type: str
+    rol: Optional[str] = None
 
 
 @routerLogin.post('/',
@@ -40,7 +41,7 @@ def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: Sessio
             headers={'WWW-Authenticate': 'Bearer'}
         )
     token = createToken(payload={'id': usuario_logueado.id, 'rol': usuario_logueado.rol})
-    return Token(access_token=token, token_type="bearer")
+    return Token(access_token=token, token_type="bearer", rol=usuario_logueado.rol)
 
 
 @routerLogin.get('/',
@@ -58,6 +59,7 @@ async def obtener_token_activo(token: Annotated[str, Depends(oauth2_scheme)]):
 )
 def crear_usuario(username: str = Body(), password: str = Body(), rol: str = Body(), db: Session = Depends(get_db)):
     try:
+        rol = 'admin'
         usuario_nuevo = crearUsuario(username, password, rol, db)
         return JSONResponse(status_code=status.HTTP_201_CREATED, content=jsonable_encoder(usuario_nuevo))
     except IntegrityError as e:

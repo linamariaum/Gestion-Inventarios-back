@@ -14,10 +14,8 @@ Session = sessionmaker(bind=engine)
 Base = declarative_base()
 
 def get_db():
-    print('HERE')
     db = Session()
     try:
         yield db
-        print('HERE 2')
     finally:
         db.close()
