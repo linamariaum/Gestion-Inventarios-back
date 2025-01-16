@@ -19,6 +19,10 @@ class CategoriaRepositorio:
 
     def obtener_categorias(self)-> CategoriaEntidad:
         return self.db.query(CategoriaEntidad).all()
+    
+
+    def obtener_categoria(self, categoria_id: int)-> CategoriaEntidad:
+        return self.db.query(CategoriaEntidad).filter(CategoriaEntidad.id == categoria_id).first()
 
 
     def existe_categoria(self, categoria_id: int) -> bool:
