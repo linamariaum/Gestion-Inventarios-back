@@ -69,5 +69,5 @@ def obtener_cliente(token_cliente: dict = Depends(validateToken), db: Session = 
     usuario_id = token_cliente.get('id')
     cliente = ClienteRepositorio(db=db).obtener_cliente(usuario_id)
     if not cliente:
-        return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content={'mensaje': 'Cliente no encontrado'})
+        return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content={'detail': 'Cliente no encontrado'})
     return JSONResponse(content=jsonable_encoder(Cliente.model_validate(cliente)))
