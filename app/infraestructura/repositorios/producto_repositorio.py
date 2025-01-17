@@ -103,6 +103,12 @@ class ProductoRepositorio:
         return producto
 
 
+    def crear_productos(self, productos: list[ProductoCreacion]) -> None:
+        productos_entidades = [ProductoEntidad(nombre=producto.nombre, precio=producto.precio, cantidad=producto.cantidad, idCategoria=producto.idCategoria, idCliente=producto.idCliente) for producto in productos]
+        self.db.bulk_save_objects(productos_entidades)
+        self.db.commit()
+
+
     def actualizar_producto(self, usuario_id: int, producto_id: int, producto: Producto) -> ProductoEntidad:
         producto_db = self.producto_pertenece_cliente(usuario_id, producto_id)
         if producto_db:
@@ -111,3 +117,7 @@ class ProductoRepositorio:
             self.db.commit()
             self.db.refresh(producto_db)
         return producto_db
+
+
+    def existe_producto_por_nombre_y_cliente(self, nombre: str, id_cliente: int) -> bool:
+        return self.db.query(ProductoEntidad).filter(ProductoEntidad.nombre == nombre, ProductoEntidad.idCliente == id_cliente).first() is not None
